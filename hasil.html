@@ -53,7 +53,8 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
 
-    const kandidat = ['Andi', 'Budi', 'Citra', 'Dedi', 'Euis', 'Fajar', 'Gina', 'Hasan'];
+    // Ganti nama kandidat ke NO.1 - NO.8
+    const kandidat = ['NO.1', 'NO.2', 'NO.3', 'NO.4', 'NO.5', 'NO.6', 'NO.7', 'NO.8'];
     const suara = new Array(kandidat.length).fill(0);
 
     const ctx = document.getElementById('voteChart').getContext('2d');
