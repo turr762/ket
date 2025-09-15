@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Statistik Pemilihan Ketua OSIS</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f2f2f2;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: auto;
+      background-color: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+
+    h1 {
+      text-align: center;
+      font-size: 20px;
+    }
+
+    canvas {
+      margin-top: 20px;
+    }
+
+    form {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    select, input {
+      padding: 8px;
+      font-size: 14px;
+    }
+
+    .buttons {
+      display: flex;
+      gap: 10px;
+    }
+
+    button {
+      flex: 1;
+      padding: 10px;
+      font-size: 14px;
+      background-color: #4e73df;
+      color: white;
+      border: none;
+      cursor: pointer;
+      border-radius: 5px;
+      transition: 0.3s;
+    }
+
+    button:hover {
+      background-color: #2e59d9;
+    }
+
+    button.subtract {
+      background-color: #e74a3b;
+    }
+
+    button.subtract:hover {
+      background-color: #c0392b;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h1>Hasil Pemilihan Ketua OSIS 2025</h1>
+
+    <canvas id="voteChart" height="200"></canvas>
+
+    <form id="voteForm">
+      <label for="candidate">Pilih Kandidat:</label>
+      <select id="candidate" required>
+        <option value="Andi">Andi</option>
+        <option value="Budi">Budi</option>
+        <option value="Citra">Citra</option>
+        <option value="Dedi">Dedi</option>
+        <option value="Euis">Euis</option>
+        <option value="Fajar">Fajar</option>
+        <option value="Gina">Gina</option>
+        <option value="Hasan">Hasan</option>
+      </select>
+
+      <label for="votes">Jumlah Suara:</label>
+      <input type="number" id="votes" min="1" required />
+
+      <div class="buttons">
+        <button type="submit">Tambah Suara</button>
+        <button type="button" class="subtract" id="subtractBtn">Kurangi Suara</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Firebase SDK Modular (v9+) -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
+    import { getDatabase, ref, onValue, get, set } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAMywtyhsdExQ5ZBvDIgnkebAXCTbPlIg0",
+      authDomain: "ketos-test1-ba678.firebaseapp.com",
+      databaseURL: "https://ketos-test1-ba678-default-rtdb.firebaseio.com",
+      projectId: "ketos-test1-ba678",
+      storageBucket: "ketos-test1-ba678.firebasestorage.app",
+      messagingSenderId: "997643784702",
+      appId: "1:997643784702:web:9d01322b849d7ac425f0af",
+      measurementId: "G-JREGVZYVMQ"
+    };
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    const kandidat = ['Andi', 'Budi', 'Citra', 'Dedi', 'Euis', 'Fajar', 'Gina', 'Hasan'];
+    const suara = new Array(kandidat.length).fill(0);
+
+    // Setup Chart.js
+    const ctx = document.getElementById('voteChart').getContext('2d');
+    const voteChart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: kandidat,
+        datasets: [{
+          label: 'Jumlah Suara',
+          data: suara,
+          backgroundColor: [
+            '#4e73df', '#1cc88a', '#e74a3b', '#f6c23e',
+            '#36b9cc', '#a569bd', '#f1948a', '#5d6d7e'
+          ],
+          borderWidth: 1
+        }]
+      },
+      options: {
+        responsive: true,
+        scales: {
+          y: {
+            beginAtZero: true,
+            title: { display: true, text: 'Jumlah Suara' }
+          }
+        },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: ctx => ctx.parsed.y + ' suara'
+            }
+          }
+        }
+      }
+    });
+
+    // Referensi database votes node
+    const votesRef = ref(db, 'votes');
+
+    // Listen data realtime dari Firebase
+    onValue(votesRef, (snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        kandidat.forEach((k, i) => {
+          suara[i] = data[k] || 0;
+        });
+        voteChart.data.datasets[0].data = suara;
+        voteChart.update();
+      }
+    });
+
+    // Tambah dan Kurangi suara
+    const form = document.getElementById('voteForm');
+    const subtractBtn = document.getElementById('subtractBtn');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const kandidatDipilih = document.getElementById('candidate').value;
+      const jumlahSuara = parseInt(document.getElementById('votes').value);
+      if (jumlahSuara <= 0) return;
+
+      const kandidatRef = ref(db, `votes/${kandidatDipilih}`);
+      const snap = await get(kandidatRef);
+      const current = snap.val() || 0;
+      await set(kandidatRef, current + jumlahSuara);
+      form.reset();
+    });
+
+    subtractBtn.addEventListener('click', async () => {
+      const kandidatDipilih = document.getElementById('candidate').value;
+      const jumlahSuara = parseInt(document.getElementById('votes').value);
+      if (jumlahSuara <= 0) return;
+
+      const kandidatRef = ref(db, `votes/${kandidatDipilih}`);
+      const snap = await get(kandidatRef);
+      const current = snap.val() || 0;
+      const newValue = current - jumlahSuara < 0 ? 0 : current - jumlahSuara;
+      await set(kandidatRef, newValue);
+      form.reset();
+    });
+  </script>
+
+</body>
+</html>
