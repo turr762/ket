@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hasil Voting Ketua OSIS</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f2f2f2;
+      padding: 20px;
+      text-align: center;
+    }
+    .container {
+      max-width: 600px;
+      margin: auto;
+      background-color: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    h1 {
+      font-size: 22px;
+    }
+    canvas {
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Hasil Akhir Pemilihan Ketua OSIS</h1>
+    <canvas id="voteChart" height="200"></canvas>
+  </div>
+
+  <!-- Firebase SDK -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
+    import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAMywtyhsdExQ5ZBvDIgnkebAXCTbPlIg0",
+      authDomain: "ketos-test1-ba678.firebaseapp.com",
+      databaseURL: "https://ketos-test1-ba678-default-rtdb.firebaseio.com",
+      projectId: "ketos-test1-ba678",
+      storageBucket: "ketos-test1-ba678.firebasestorage.app",
+      messagingSenderId: "997643784702",
+      appId: "1:997643784702:web:9d01322b849d7ac425f0af",
+      measurementId: "G-JREGVZYVMQ"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    const kandidat = ['Andi', 'Budi', 'Citra', 'Dedi', 'Euis', 'Fajar', 'Gina', 'Hasan'];
+    const suara = new Array(kandidat.length).fill(0);
+
+    const ctx = document.getElementById('voteChart').getContext('2d');
+    const voteChart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: kandidat,
+        datasets: [{
+          label: 'Jumlah Suara',
+          data: suara,
+          backgroundColor: [
+            '#4e73df', '#1cc88a', '#e74a3b', '#f6c23e',
+            '#36b9cc', '#a569bd', '#f1948a', '#5d6d7e'
+          ]
+        }]
+      },
+      options: {
+        responsive: true,
+        scales: {
+          y: {
+            beginAtZero: true
+          }
+        },
+        plugins: {
+          legend: {
+            display: false
+          }
+        }
+      }
+    });
+
+    const votesRef = ref(db, 'votes');
+    onValue(votesRef, (snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        kandidat.forEach((k, i) => {
+          suara[i] = data[k] || 0;
+        });
+        voteChart.data.datasets[0].data = suara;
+        voteChart.update();
+      }
+    });
+  </script>
+</body>
+</html>
