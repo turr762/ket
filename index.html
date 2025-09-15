@@ -82,14 +82,14 @@
     <form id="voteForm">
       <label for="candidate">Pilih Kandidat:</label>
       <select id="candidate" required>
-        <option value="Andi">Andi</option>
-        <option value="Budi">Budi</option>
-        <option value="Citra">Citra</option>
-        <option value="Dedi">Dedi</option>
-        <option value="Euis">Euis</option>
-        <option value="Fajar">Fajar</option>
-        <option value="Gina">Gina</option>
-        <option value="Hasan">Hasan</option>
+        <option value="NO.1">NO.1</option>
+        <option value="NO.2">NO.2</option>
+        <option value="NO.3">NO.3</option>
+        <option value="NO.4">NO.4</option>
+        <option value="NO.5">NO.5</option>
+        <option value="NO.6">NO.6</option>
+        <option value="NO.7">NO.7</option>
+        <option value="NO.8">NO.8</option>
       </select>
 
       <label for="votes">Jumlah Suara:</label>
@@ -118,14 +118,12 @@
       measurementId: "G-JREGVZYVMQ"
     };
 
-    // Initialize Firebase
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
 
-    const kandidat = ['Andi', 'Budi', 'Citra', 'Dedi', 'Euis', 'Fajar', 'Gina', 'Hasan'];
+    const kandidat = ['NO.1', 'NO.2', 'NO.3', 'NO.4', 'NO.5', 'NO.6', 'NO.7', 'NO.8'];
     const suara = new Array(kandidat.length).fill(0);
 
-    // Setup Chart.js
     const ctx = document.getElementById('voteChart').getContext('2d');
     const voteChart = new Chart(ctx, {
       type: 'bar',
@@ -160,10 +158,8 @@
       }
     });
 
-    // Referensi database votes node
     const votesRef = ref(db, 'votes');
 
-    // Listen data realtime dari Firebase
     onValue(votesRef, (snapshot) => {
       const data = snapshot.val();
       if (data) {
@@ -175,7 +171,6 @@
       }
     });
 
-    // Tambah dan Kurangi suara
     const form = document.getElementById('voteForm');
     const subtractBtn = document.getElementById('subtractBtn');
 
@@ -200,11 +195,10 @@
       const kandidatRef = ref(db, `votes/${kandidatDipilih}`);
       const snap = await get(kandidatRef);
       const current = snap.val() || 0;
-      const newValue = current - jumlahSuara < 0 ? 0 : current - jumlahSuara;
+      const newValue = Math.max(current - jumlahSuara, 0);
       await set(kandidatRef, newValue);
       form.reset();
     });
   </script>
-
 </body>
 </html>
